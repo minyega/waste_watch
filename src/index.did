@@ -1,0 +1,36 @@
+type Report = record {
+  id : text;
+  status : text;
+  latitude : float64;
+  typeOfWaste : text;
+  createdAt : nat64;
+  description : text;
+  updatedAt : opt nat64;
+  reporterId : text;
+  longitude : float64;
+  location : text;
+};
+type ReportPayload = record {
+  status : text;
+  latitude : float64;
+  typeOfWaste : text;
+  description : text;
+  reporterId : text;
+  longitude : float64;
+  location : text;
+};
+type ReportResponse = record { message : text; pinLocation : text };
+type UserPayload = record { username : text; email : text };
+type _AzleResult = variant { Ok : vec Report; Err : text };
+type _AzleResult_1 = variant { Ok : Report; Err : text };
+service : () -> {
+  LocationForReportById : (text) -> (ReportResponse) query;
+  addUser : (UserPayload) -> (text);
+  createNewReport : (ReportPayload) -> (text);
+  deleteReport : (text) -> (text);
+  getAllReports : () -> (_AzleResult) query;
+  getAllReportsByReporter : (text) -> (_AzleResult) query;
+  resolvedReport : (text) -> (_AzleResult_1);
+  searchByStatus : (text) -> (_AzleResult) query;
+  updateReport : (text, ReportPayload) -> (text);
+}
