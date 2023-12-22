@@ -21,16 +21,18 @@ type ReportPayload = record {
 };
 type ReportResponse = record { message : text; pinLocation : text };
 type UserPayload = record { username : text; email : text };
-type _AzleResult = variant { Ok : vec Report; Err : text };
-type _AzleResult_1 = variant { Ok : Report; Err : text };
+type _AzleResult = variant { Ok : ReportResponse; Err : text };
+type _AzleResult_1 = variant { Ok : text; Err : text };
+type _AzleResult_2 = variant { Ok : vec Report; Err : text };
+type _AzleResult_3 = variant { Ok : Report; Err : text };
 service : () -> {
-  LocationForReportById : (text) -> (ReportResponse) query;
-  addUser : (UserPayload) -> (text);
-  createNewReport : (ReportPayload) -> (text);
-  deleteReport : (text) -> (text);
-  getAllReports : () -> (_AzleResult) query;
-  getAllReportsByReporter : (text) -> (_AzleResult) query;
-  resolvedReport : (text) -> (_AzleResult_1);
-  searchByStatus : (text) -> (_AzleResult) query;
-  updateReport : (text, ReportPayload) -> (text);
+  LocationForReportById : (text) -> (_AzleResult) query;
+  addUser : (UserPayload) -> (_AzleResult_1);
+  createNewReport : (ReportPayload) -> (_AzleResult_1);
+  deleteReport : (text) -> (_AzleResult_1);
+  getAllReports : () -> (_AzleResult_2) query;
+  getAllReportsByReporter : (text) -> (_AzleResult_2) query;
+  resolvedReport : (text) -> (_AzleResult_3);
+  searchByStatus : (text) -> (_AzleResult_2) query;
+  updateReport : (text, ReportPayload) -> (_AzleResult_1);
 }
