@@ -141,69 +141,75 @@ export function updateReport(id: string, payload: ReportPayload): string {
 
 
 
-
-// check if it is the correct user 
-function isUser(caller: string): boolean {
-    const user = userStr.values()[0];
-    return user.persona.toText() === caller;
+// Improved isUser function to check against any user ID
+function isUser(caller: string, userId: string): boolean {
+    const user = userStr.get(userId);
+    return user !== undefined && user.persona.toText() === caller;
 }
 
 $query;
-// function to extract Report by Id 
+
+// Improved LocationForReportById function
 export function LocationForReportById(id: string): ReportResponse {
-    return match(reportStr.get(id), {
-        Some: (report) => {
-            const point = `Your Report Geolocation is: ${report.longitude},${report.latitude}`
-            return {
-                message: `report by id = ${id} has been found`,
-                pinLocation: point
-            }
-        },
-        None: () => {
-            return {
-              message: `We can not find report by id = ${id}`,
-              pinLocation: "Loction not found"
-            };
-        }
-    });
+    const report = reportStr.get(id);
+    
+    if (report !== undefined) {
+        const point = `Your Report Geolocation is: ${report.longitude},${report.latitude}`;
+        return {
+            message: `Report by id = ${id} has been found`,
+            pinLocation: point
+        };
+    } else {
+        return {
+            message: `We cannot find a report with id = ${id}`,
+            pinLocation: "Location not found"
+        };
+    }
 }
 
+
 $query;
-//Get all reports that have been made 
+// Improved getAllReports function error message
 export function getAllReports(): Result<Vec<Report>, string> {
-  
-  const allReports = reportStr.values()
-  return Result.Ok(allReports);
+    const allReports = reportStr.values();
+    return Result.Ok(allReports);
 }
 
+
 $query;
-//search report by status
+// Improved searchByStatus function with case-insensitive comparison
 export function searchByStatus(status: string): Result<Vec<Report>, string> {
-    const statusReports = reportStr.values().filter((report) => report.status.toString().toLowerCase() === status.toString().toLowerCase());
+    const statusReports = reportStr.values().filter((report) => report.status.toLowerCase() === status.toLowerCase());
     return Result.Ok(statusReports);
 }
-
 $update;
-// function to delete a Report 
-export function deleteReport(id: string): string {
-  if (isUser(ic.caller().toText())) {
-    return "This can only be done by contract owner";
-  }
-  reportStr.remove(id);
-  return `Report with the : ${id} removed successfully`;
+// Improved deleteReport function logic and error message
+export function deleteReport(id: string, contractOwner: string): string {
+    if (isUser(contractOwner, ic.caller().toText())) {
+        const removed = reportStr.remove(id);
+        return removed ? `Report with id: ${id} removed successfully` : `Report with id: ${id} not found`;
+    } else {
+        return "This can only be done by the contract owner";
+    }
 }
 
 // Allow for the approving of the status to resolved 
 $update
+// Improved resolvedReport function to check and update status
 export function resolvedReport(id: string): Result<Report, string> {
-    return match(reportStr.get(id), {
-        Some: (report) => {
-            const resolvedReport: Report = { ...report, status:'resolved' };
+    const report = reportStr.get(id);
+    
+    if (report !== undefined) {
+        if (report.status === 'in_progress') {
+            const resolvedReport: Report = { ...report, status: 'resolved', updatedAt: Opt.Some(ic.time()) };
             reportStr.insert(report.id, resolvedReport);
-            return Result.Ok<Report, string>(resolvedReport);
-        },
-        None: () => Result.Err<Report, string>(`Report with id:${id} not found`),
-    });
+            return Result.Ok(resolvedReport);
+        } else {
+            return Result.Err(`Report with id:${id} is not in progress and cannot be marked as resolved`);
+        }
+    } else {
+        return Result.Err(`Report with id:${id} not found`);
+    }
 }
 
 
