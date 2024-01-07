@@ -136,7 +136,7 @@ export function addUser(payload: UserPayload): Result<text,text> {
 $update;
 //this Function is to add a New Report 
 export function createNewReport(payload: ReportPayload): Result<string,string> {
-  if (!isUser(ic.caller().toText())) {
+  if (!isReporter(payload.reporterId)) {
     return Result.Err(`This can only be done by the contract owner`);
   }
 
@@ -165,9 +165,6 @@ export function updateReport(id: string, payload: ReportPayload): Result<text,te
   if(!isValidUuid(id)){
     return Result.Err(`id='${id}' is not a valid uuid`)
   }
-  if (!isUser(ic.caller().toText())) {
-    return Result.Err("This can only be done by the contract owner");
-  }
 
   const report = match(reportStr.get(id), {
     Some: (report) => report,
@@ -175,6 +172,9 @@ export function updateReport(id: string, payload: ReportPayload): Result<text,te
   });
 
   if (report) {
+        if (!isReporter(report.reporterId)) {
+          return Result.Err("This can only be done by the contract owner");
+        }
         let inputValidationErrors = validateReportPayload(payload);
         if(inputValidationErrors.length){
           return Result.Err(`Input validation failed. Errors=${inputValidationErrors}`);
@@ -185,7 +185,6 @@ export function updateReport(id: string, payload: ReportPayload): Result<text,te
         report.typeOfWaste = payload.typeOfWaste;
         report.status = payload.status;
         report.description = payload.description;
-        report.reporterId = payload.reporterId;
         report.updatedAt = Opt.Some(ic.time());
         reportStr.insert(report.id, report);
         return Result.Ok(`Successfully updated report with id=${report.id}`);
@@ -199,9 +198,12 @@ export function updateReport(id: string, payload: ReportPayload): Result<text,te
 
 
 // check if it is the correct user 
-function isUser(caller: string): boolean {
-    const user = userStr.values()[0];
-    return user.persona.toText() === caller;
+function isReporter(reportedId: string): boolean {
+    const userOpt = userStr.get(reportedId);
+    if ("None" in userOpt) {
+      return false;
+    }
+    return userOpt.Some.persona.toText() === ic.caller().toText();
 }
 
 $query;
@@ -244,7 +246,11 @@ export function deleteReport(id: string): Result<text,text> {
   if(!isValidUuid(id)){
     return Result.Err(`id='${id}' is not a valid uuid`)
   }
-  if (!isUser(ic.caller().toText())) {
+  let reportOpt = reportStr.get(id);
+  if ("None" in reportOpt) {
+    return Result.Err(`Report with id='${id}' not found.`);
+  }
+  if (!isReporter(reportOpt.Some.reporterId)) {
     return Result.Err("This can only be done by contract owner");
   }
   reportStr.remove(id);
@@ -257,7 +263,11 @@ export function resolvedReport(id: string): Result<Report, string> {
   if(!isValidUuid(id)){
     return Result.Err(`id='${id}' is not a valid uuid`)
   }
-  if (!isUser(ic.caller().toText())) {
+  let reportOpt = reportStr.get(id);
+  if ("None" in reportOpt) {
+    return Result.Err(`Report with id='${id}' not found.`);
+  }
+  if (!isReporter(reportOpt.Some.reporterId)) {
     return Result.Err("This can only be done by contract owner");
   }
     return match(reportStr.get(id), {
