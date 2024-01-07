@@ -21,16 +21,17 @@ type ReportPayload = record {
 };
 type ReportResponse = record { message : text; pinLocation : text };
 type UserPayload = record { username : text; email : text };
-type _AzleResult = variant { Ok : vec Report; Err : text };
-type _AzleResult_1 = variant { Ok : Report; Err : text };
+type _AzleResult = variant { Ok : text; Err : text };
+type _AzleResult_1 = variant { Ok : vec Report; Err : text };
+type _AzleResult_2 = variant { Ok : Report; Err : text };
 service : () -> {
   LocationForReportById : (text) -> (ReportResponse) query;
-  addUser : (UserPayload) -> (text);
-  createNewReport : (ReportPayload) -> (text);
-  deleteReport : (text) -> (text);
-  getAllReports : () -> (_AzleResult) query;
-  getAllReportsByReporter : (text) -> (_AzleResult) query;
-  resolvedReport : (text) -> (_AzleResult_1);
-  searchByStatus : (text) -> (_AzleResult) query;
-  updateReport : (text, ReportPayload) -> (text);
+  addUser : (UserPayload) -> (_AzleResult);
+  createNewReport : (ReportPayload) -> (_AzleResult);
+  deleteReport : (text) -> (_AzleResult);
+  getAllReports : () -> (_AzleResult_1) query;
+  getAllReportsByReporter : (text) -> (_AzleResult_1) query;
+  resolvedReport : (text) -> (_AzleResult_2);
+  searchByStatus : (text) -> (_AzleResult_1) query;
+  updateReport : (text, ReportPayload) -> (_AzleResult);
 }
